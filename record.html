@@ -1,4 +1,3 @@
-HTML
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
@@ -6,6 +5,8 @@ HTML
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>個人體重管理系統 - 體重紀錄</title>
     <link rel="stylesheet" href="style.css">
+    <!-- 引入 Supabase JS Client 函式庫 -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 
@@ -25,12 +26,62 @@ HTML
     <main class="container content">
         <section class="card">
             <h2>體重紀錄</h2>
+            <!-- 顯示從 Supabase 讀取的資料清單 -->
+            <div id="record-container" style="margin-top: 20px;">
+                <p>資料載入中...</p>
+            </div>
         </section>
     </main>
 
     <script>
+        // 設定你的 Supabase 專案網址與 Publishable Key
+        const SUPABASE_URL = 'https://你的專案代號.supabase.co'; // <-- 記得改成你的專案網址
+        const SUPABASE_ANON_KEY = 'sb_publishable_YIyuePWhcZ3BgsyYfwvXDQ_Mqh4ePa5';
+
+        // 初始化 Supabase 客戶端
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        async function fetchWeightRecords() {
+            const container = document.getElementById('record-container');
+            
+            try {
+                // 從 weight_records 資料表讀取資料，依日期排序
+                const { data, error } = await supabaseClient
+                    .from('weight_records')
+                    .select('*')
+                    .order('record_date', { ascending: false });
+
+                if (error) {
+                    throw error;
+                }
+
+                if (!data || data.length === 0) {
+                    container.innerHTML = '<p>目前沒有任何體重紀錄。</p>';
+                    return;
+                }
+
+                // 組合 HTML 列表來顯示資料
+                let html = '<ul style="list-style-type: none; padding: 0;">';
+                data.forEach(record => {
+                    html += `
+                        <li style="padding: 10px 0; border-bottom: 1px solid #eee;">
+                            <strong>日期：</strong> ${record.record_date} | 
+                            <strong>體重：</strong> ${record.weight} 公斤 
+                            ${record.note ? `| <strong>備註：</strong> ${record.note}` : ''}
+                        </li>
+                    `;
+                });
+                html += '</ul>';
+                container.innerHTML = html;
+
+            } catch (error) {
+                console.error('讀取資料失敗:', error.message);
+                container.innerHTML = `<p style="color: red;">載入失敗：${error.message}</p>`;
+            }
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
-            console.log('體重紀錄頁面載入完成');
+            fetchWeightRecords();
         });
     </script>
 </body>
