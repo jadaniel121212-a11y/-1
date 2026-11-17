@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>個人體重管理系統 - 體重紀錄</title>
     <link rel="stylesheet" href="style.css">
-    <!-- 引入 Supabase JS Client 函式庫 -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
@@ -19,6 +18,7 @@
                 <a href="food.html" class="nav-link">可食用食物</a>
                 <a href="rules.html" class="nav-link">管理體重規則</a>
                 <a href="record.html" class="nav-link active">體重紀錄</a>
+                <a href="login.html" class="nav-link">登入 / 註冊</a>
             </nav>
         </div>
     </header>
@@ -26,7 +26,6 @@
     <main class="container content">
         <section class="card">
             <h2>體重紀錄</h2>
-            <!-- 顯示從 Supabase 讀取的資料清單 -->
             <div id="record-container" style="margin-top: 20px;">
                 <p>資料載入中...</p>
             </div>
@@ -34,18 +33,14 @@
     </main>
 
     <script>
-        // 設定你的 Supabase 專案網址與 Publishable Key
         const SUPABASE_URL = 'https://vnjkvlldzdlldpnvwqqa.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_YIyuePWhcZ3BgsyYfwvXDQ_Mqh4ePa5';
-
-        // 初始化 Supabase 客戶端
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         async function fetchWeightRecords() {
             const container = document.getElementById('record-container');
             
             try {
-                // 從 weight_records 資料表讀取資料，依日期排序
                 const { data, error } = await supabaseClient
                     .from('weight_records')
                     .select('*')
@@ -60,7 +55,6 @@
                     return;
                 }
 
-                // 組合 HTML 列表來顯示資料
                 let html = '<ul style="list-style-type: none; padding: 0;">';
                 data.forEach(record => {
                     html += `
