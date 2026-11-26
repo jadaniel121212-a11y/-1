@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>飲食熱量與烹調方式計算機</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans TC", sans-serif; }
+  </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen py-8 px-4">
+  <div class="max-w-3xl mx-auto space-y-6">
+    <!-- 頁首 -->
+    <header class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-slate-800 pb-4">
+      <div>
+        <h1 class="text-2xl font-bold tracking-tight text-emerald-400">飲食熱量與烹調計算機</h1>
+        <p class="text-sm text-slate-400 mt-1">輸入食物、克數與烹調方式，即時估算總熱量與營養素</p>
+      </div>
+      <a href="index.html" class="text-sm text-slate-300 hover:text-emerald-400 underline underline-offset-4">← 返回首頁</a>
+    </header>
+
+    <!-- 主要計算卡片 -->
+    <section class="bg-slate-800/80 border border-slate-700 rounded-2xl p-6 shadow-xl space-y-5">
+      <!-- 1. 食物選擇與熱量輸入 -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label for="foodName" class="block text-sm font-medium text-slate-300 mb-1">食物名稱（可搜尋或自訂）</label>
+          <input
+            type="text"
+            id="foodName"
+            list="foodList"
+            placeholder="例如：雞胸肉、白飯、板豆腐..."
+            class="w-full rounded-lg bg-slate-900 border border-slate-700 px-3.5 py-2.5 text-slate-100 focus:outline-none focus:border-emerald-500"
+          />
+          <datalist id="foodList"></datalist>
+        </div>
+
+        <div>
+          <label for="baseCal" class="block text-sm font-medium text-slate-300 mb-1">每 100g 食材熱量 (kcal)</label>
+          <input
+            type="number"
+            id="baseCal"
+            min="0"
+            step="1"
+            value="115"
+            class="w-full rounded-lg bg-slate-900 border border-slate-700 px-3.5 py-2.5 text-slate-100 focus:outline-none focus:border-emerald-500"
+          />
+        </div>
+      </div>
+
+      <!-- 常見食物快速點選 -->
+      <div>
+        <span class="block text-xs text-slate-400 mb-2">常見食材快選：</span>
+        <div id="quickFoodBtns" class="flex flex-wrap gap-2"></div>
+      </div>
+
+      <!-- 營養素微調（選填，選內建食物會自動帶入） -->
+      <div class="grid grid-cols-3 gap-3 bg-slate-900/60 p-3 rounded-xl border border-slate-700/60">
+        <div>
+          <label for="baseProtein" class="block text-xs text-slate-400 mb-1">蛋白質 / 100g (g)</label>
+          <input type="number" id="baseProtein" min="0" step="0.1" value="23.3" class="w-full rounded bg-slate-800 border border-slate-700 px-2.5 py-1.5 text-sm text-slate-100" />
+        </div>
+        <div>
+          <label for="baseCarbs" class="block text-xs text-slate-400 mb-1">碳水 / 100g (g)</label>
+          <input type="number" id="baseCarbs" min="0" step="0.1" value="0" class="w-full rounded bg-slate-800 border border-slate-700 px-2.5 py-1.5 text-sm text-slate-100" />
+        </div>
+        <div>
+          <label for="baseFat" class="block text-xs text-slate-400 mb-1">脂肪 / 100g (g)</label>
+          <input type="number" id="baseFat" min="0" step="0.1" value="1.9" class="w-full rounded bg-slate-800 border border-slate-700 px-2.5 py-1.5 text-sm text-slate-1
