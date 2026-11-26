@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
@@ -194,4 +195,291 @@
                 <div class="macro-summary">
                     <div class="macro-item">蛋白質：<strong><span id="totalPro">35.0</span> g</strong></div>
                     <div class="macro-item">碳水：<strong><span id="totalCarb">0.0</span> g</strong></div>
-                    <div class="macro-item">脂肪（含油）：<strong><span id="totalFat
+                    <div class="macro-item">脂肪（含油）：<strong><span id="totalFat">2.9</span> g</strong></div>
+                </div>
+
+                <button type="button" class="btn-primary" id="addBtn">＋ 加入今日計算清單</button>
+            </div>
+        </section>
+
+        <section class="card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <h2 style="margin: 0;">今日計算清單</h2>
+                <button type="button" class="btn-danger-sm" id="clearBtn">清空清單</button>
+            </div>
+            <p style="margin-bottom: 12px;">
+                今日累計：<strong><span id="dayTotalCal">0</span> kcal</strong>
+                （蛋白質 <span id="dayTotalPro">0</span>g / 碳水 <span id="dayTotalCarb">0</span>g / 脂肪 <span id="dayTotalFat">0</span>g）
+            </p>
+            <div id="logList"></div>
+        </section>
+    </main>
+
+    <script>
+        // 內建台灣常見食物資料庫（每 100g 基準熱量與營養素）
+        const FOOD_DB = [
+            // 肉類與海鮮
+            { name: "雞胸肉", keywords: ["雞胸", "舒肥雞"], cal: 115, p: 23.3, c: 0, f: 1.9 },
+            { name: "雞腿肉（去皮）", keywords: ["去皮雞腿", "雞腿排"], cal: 155, p: 19.5, c: 0, f: 8.2 },
+            { name: "帶皮雞腿肉", keywords: ["雞腿", "大雞腿", "棒棒腿"], cal: 215, p: 17.5, c: 0, f: 15.6 },
+            { name: "雞翅", keywords: ["二節翅", "三節翅"], cal: 210, p: 18.0, c: 0, f: 15.0 },
+            { name: "豬里肌（瘦肉）", keywords: ["豬里肌", "豬肉片", "瘦豬肉"], cal: 145, p: 21.5, c: 0, f: 6.0 },
+            { name: "豬梅花肉", keywords: ["梅花豬", "豬梅花"], cal: 235, p: 17.5, c: 0, f: 18.0 },
+            { name: "豬五花 / 控肉", keywords: ["五花肉", "三層肉", "控肉", "爌肉"], cal: 380, p: 13.0, c: 0, f: 36.0 },
+            { name: "牛腱 / 牛板腱", keywords: ["牛腱", "牛肉", "牛排", "沙朗", "菲力"], cal: 145, p: 21.0, c: 0, f: 6.2 },
+            { name: "牛五花 / 雪花牛", keywords: ["牛五花", "雪花牛", "牛培根"], cal: 330, p: 14.5, c: 0, f: 30.0 },
+            { name: "鮭魚", keywords: ["鮭魚肚", "鮭魚排"], cal: 208, p: 20.0, c: 0, f: 13.4 },
+            { name: "鯖魚", keywords: ["鯖魚片", "花飛"], cal: 230, p: 19.5, c: 0, f: 16.5 },
+            { name: "鯛魚片 / 鱸魚", keywords: ["鯛魚", "吳郭魚", "鱸魚", "鱈魚", "白肉魚"], cal: 105, p: 20.5, c: 0, f: 2.2 },
+            { name: "蝦仁 / 白蝦", keywords: ["蝦子", "白蝦", "草蝦", "蝦仁"], cal: 95, p: 20.2, c: 0.5, f: 1.0 },
+            { name: "透抽 / 花枝 / 魷魚", keywords: ["透抽", "花枝", "魷魚", "小卷", "中卷"], cal: 85, p: 17.5, c: 1.2, f: 1.0 },
+
+            // 蛋與豆製品
+            { name: "雞蛋（全蛋）", keywords: ["水煮蛋", "荷包蛋", "茶葉蛋", "溏心蛋", "蛋"], cal: 144, p: 12.6, c: 1.5, f: 9.5 },
+            { name: "蛋白", keywords: ["雞蛋白"], cal: 48, p: 10.8, c: 0.7, f: 0.1 },
+            { name: "板豆腐", keywords: ["傳統豆腐", "豆腐"], cal: 88, p: 8.5, c: 2.3, f: 5.0 },
+            { name: "嫩豆腐", keywords: ["中華豆腐", "盒裝豆腐", "雞蛋豆腐"], cal: 55, p: 5.0, c: 2.2, f: 2.8 },
+            { name: "豆干", keywords: ["五香豆干", "小豆干", "大豆干"], cal: 165, p: 16.5, c: 4.5, f: 9.0 },
+            { name: "豆包（未炸）", keywords: ["生豆包", "濕豆包", "腐皮"], cal: 185, p: 18.0, c: 4.0, f: 10.5 },
+            { name: "無糖豆漿", keywords: ["豆漿"], cal: 32, p: 3.4, c: 1.2, f: 1.5 },
+            { name: "毛豆", keywords: ["毛豆仁"], cal: 122, p: 11.5, c: 9.8, f: 4.5 },
+
+            // 主食澱粉類
+            { name: "白飯（熟）", keywords: ["米飯", "飯", "白米飯"], cal: 183, p: 3.1, c: 41.0, f: 0.3 },
+            { name: "糙米飯 / 五穀飯（熟）", keywords: ["糙米", "五穀飯", "紫米飯", "胚芽米"], cal: 155, p: 3.3, c: 32.8, f: 1.1 },
+            { name: "地瓜（蒸/烤）", keywords: ["番薯", "紅薯", "烤地瓜", "蒸地瓜"], cal: 124, p: 1.4, c: 29.0, f: 0.2 },
+            { name: "馬鈴薯", keywords: ["洋芋", "土豆"], cal: 77, p: 2.0, c: 17.5, f: 0.1 },
+            { name: "南瓜", keywords: ["栗子南瓜"], cal: 65, p: 1.5, c: 15.5, f: 0.2 },
+            { name: "芋頭", keywords: ["大甲芋頭"], cal: 128, p: 2.2, c: 29.5, f: 0.2 },
+            { name: "玉米", keywords: ["甜玉米", "水果玉米", "玉米粒"], cal: 105, p: 3.3, c: 21.0, f: 1.2 },
+            { name: "燕麥片（乾重）", keywords: ["大燕麥片", "麥片", "燕麥"], cal: 389, p: 13.2, c: 67.7, f: 6.5 },
+            { name: "麵條（熟）", keywords: ["陽春麵", "拉麵", "烏龍麵", "意麵", "油麵", "義大利麵"], cal: 135, p: 4.2, c: 27.5, f: 0.8 },
+            { name: "冬粉（熟）", keywords: ["粉絲"], cal: 85, p: 0.1, c: 21.0, f: 0.1 },
+            { name: "吐司", keywords: ["白吐司", "全麥吐司", "厚片吐司"], cal: 265, p: 8.5, c: 49.0, f: 3.8 },
+            { name: "饅頭", keywords: ["白饅頭", "黑糖饅頭", "全麥饅頭"], cal: 235, p: 7.5, c: 48.0, f: 1.2 },
+            { name: "水餃", keywords: ["高麗菜水餃", "韭菜水餃", "鍋貼"], cal: 215, p: 8.2, c: 26.0, f: 8.5 },
+            { name: "蛋餅", keywords: ["原味蛋餅", "起司蛋餅", "鮪魚蛋餅"], cal: 235, p: 8.5, c: 26.5, f: 10.5 },
+
+            // 蔬菜類
+            { name: "花椰菜", keywords: ["綠花椰", "白花椰", "青花菜"], cal: 34, p: 2.8, c: 6.6, f: 0.4 },
+            { name: "高麗菜", keywords: ["包心菜", "大白菜"], cal: 23, p: 1.3, c: 4.8, f: 0.2 },
+            { name: "青江菜 / 菠菜 / 地瓜葉", keywords: ["青江菜", "菠菜", "地瓜葉", "空心菜", "大陸妹", "小白菜", "青菜", "燙青菜"], cal: 24, p: 2.0, c: 4.2, f: 0.3 },
+            { name: "小黃瓜 / 大黃瓜", keywords: ["小黃瓜", "大黃瓜", "絲瓜", "冬瓜", "苦瓜", "櫛瓜"], cal: 16, p: 0.8, c: 3.4, f: 0.1 },
+            { name: "番茄（大番茄）", keywords: ["牛番茄", "大番茄"], cal: 19, p: 0.9, c: 4.1, f: 0.2 },
+            { name: "杏鮑菇 / 金針菇 / 香菇", keywords: ["杏鮑菇", "金針菇", "香菇", "鴻喜菇", "秀珍菇", "菇類"], cal: 32, p: 2.5, c: 6.0, f: 0.3 },
+            { name: "洋蔥 / 紅蘿蔔", keywords: ["洋蔥", "紅蘿蔔", "胡蘿蔔", "白蘿蔔"], cal: 38, p: 1.0, c: 8.8, f: 0.2 },
+
+            // 水果、乳品與堅果
+            { name: "香蕉", keywords: ["芭蕉"], cal: 89, p: 1.1, c: 22.8, f: 0.3 },
+            { name: "蘋果", keywords: ["富士蘋果"], cal: 52, p: 0.3, c: 13.8, f: 0.2 },
+            { name: "芭樂", keywords: ["珍珠芭樂"], cal: 42, p: 1.1, c: 10.2, f: 0.3 },
+            { name: "木瓜 / 火龍果 / 奇異果", keywords: ["木瓜", "火龍果", "奇異果", "鳳梨", "西瓜"], cal: 48, p: 0.8, c: 11.8, f: 0.2 },
+            { name: "全脂鮮奶", keywords: ["鮮奶", "牛奶", "鮮乳"], cal: 63, p: 3.2, c: 4.8, f: 3.5 },
+            { name: "無糖優格", keywords: ["希臘優格", "優格"], cal: 62, p: 4.5, c: 5.0, f: 2.5 },
+            { name: "酪梨", keywords: ["牛油果"], cal: 160, p: 2.0, c: 8.5, f: 14.7 },
+            { name: "綜合堅果", keywords: ["核桃", "杏仁", "腰果", "花生", "堅果"], cal: 605, p: 18.0, c: 19.0, f: 53.0 },
+            { name: "橄欖油 / 食用油", keywords: ["橄欖油", "沙拉油", "麻油", "香油", "奶油"], cal: 884, p: 0, c: 0, f: 100.0 }
+        ];
+
+        const COOK_MAP = {
+            boil: { label: "水煮/清蒸", extraFatPer100: 0, extraCarbPer100: 0 },
+            pan_light: { label: "乾煎/少油炒", extraFatPer100: 2.5, extraCarbPer100: 0 },
+            stir_braise: { label: "一般炒/紅燒/滷", extraFatPer100: 5.0, extraCarbPer100: 2.5 },
+            deep_fry: { label: "油炸/裹粉", extraFatPer100: 11.0, extraCarbPer100: 9.0 }
+        };
+
+        const foodInput = document.getElementById("foodInput");
+        const gramsInput = document.getElementById("gramsInput");
+        const cookSelect = document.getElementById("cookMethod");
+        const quickFoodsEl = document.getElementById("quickFoods");
+        const datalistEl = document.getElementById("foodDatalist");
+        const matchStatusEl = document.getElementById("matchStatus");
+        const logListEl = document.getElementById("logList");
+
+        let logs = JSON.parse(localStorage.getItem("weight_sys_food_logs") || "[]");
+
+        // 智慧搜尋食物（精確名稱 -> 包含名稱 -> 關鍵字比對 -> 預設一般食物估算值）
+        function findFoodInfo(rawQuery) {
+            const q = rawQuery.trim().toLowerCase();
+            if (!q) {
+                return { matched: false, name: "未輸入食物", cal: 0, p: 0, c: 0, f: 0 };
+            }
+
+            // 1. 精確符合
+            let found = FOOD_DB.find(item => item.name.toLowerCase() === q);
+            // 2. 名稱包含輸入字詞，或輸入字詞包含資料庫名稱
+            if (!found) {
+                found = FOOD_DB.find(item => {
+                    const cleanName = item.name.split("（")[0].toLowerCase();
+                    return cleanName.includes(q) || q.includes(cleanName);
+                });
+            }
+            // 3. 關鍵字比對
+            if (!found) {
+                found = FOOD_DB.find(item =>
+                    item.keywords.some(kw => kw.toLowerCase().includes(q) || q.includes(kw.toLowerCase()))
+                );
+            }
+
+            if (found) {
+                return {
+                    matched: true,
+                    matchedName: found.name,
+                    cal: found.cal,
+                    p: found.p,
+                    c: found.c,
+                    f: found.f
+                };
+            }
+
+            // 4. 若資料庫無此冷門食物，使用一般熟食平均值估算 (每100g約 140 kcal)
+            return {
+                matched: false,
+                matchedName: rawQuery.trim(),
+                cal: 140,
+                p: 8.0,
+                c: 15.0,
+                f: 5.0
+            };
+        }
+
+        function initFoods() {
+            const quickList = ["雞胸肉", "白飯（熟）", "雞蛋（全蛋）", "地瓜（蒸/烤）", "鮭魚", "板豆腐", "花椰菜"];
+            FOOD_DB.forEach(item => {
+                const opt = document.createElement("option");
+                opt.value = item.name;
+                datalistEl.appendChild(opt);
+            });
+
+            quickList.forEach(name => {
+                const btn = document.createElement("button");
+                btn.type = "button";
+                btn.className = "btn-chip";
+                btn.textContent = name.split("（")[0];
+                btn.onclick = () => {
+                    foodInput.value = name;
+                    calcNow();
+                };
+                quickFoodsEl.appendChild(btn);
+            });
+        }
+
+        function setGrams(g) {
+            gramsInput.value = g;
+            calcNow();
+        }
+
+        function calcNow() {
+            const query = foodInput.value.trim();
+            const grams = Math.max(0, parseFloat(gramsInput.value) || 0);
+            const ratio = grams / 100;
+            const cook = COOK_MAP[cookSelect.value] || COOK_MAP.boil;
+
+            const info = findFoodInfo(query);
+
+            // 更新辨識狀態提示
+            if (!query) {
+                matchStatusEl.className = "match-badge fallback";
+                matchStatusEl.textContent = "請在上方輸入食物名稱，系統會自動帶入熱量基準。";
+            } else if (info.matched) {
+                matchStatusEl.className = "match-badge";
+                matchStatusEl.innerHTML = `已自動辨識為：<strong>${info.matchedName}</strong>（每 100g 基準 ${info.cal} kcal｜蛋白質 ${info.p}g / 碳水 ${info.c}g / 脂肪 ${info.f}g）`;
+            } else {
+                matchStatusEl.className = "match-badge fallback";
+                matchStatusEl.innerHTML = `資料庫無「<strong>${query}</strong>」精確資料，已採用一般食物平均值（每 100g 約 140 kcal）自動估算。`;
+            }
+
+            const extraFat = cook.extraFatPer100 * ratio;
+            const extraCarb = cook.extraCarbPer100 * ratio;
+            const rawCal = info.cal * ratio;
+            const extraCal = extraFat * 9 + extraCarb * 4;
+            const totalCal = rawCal + extraCal;
+
+            const totalP = info.p * ratio;
+            const totalC = info.c * ratio + extraCarb;
+            const totalF = info.f * ratio + extraFat;
+
+            document.getElementById("totalCal").textContent = Math.round(totalCal);
+            document.getElementById("rawCal").textContent = Math.round(rawCal);
+            document.getElementById("extraCal").textContent = `+${Math.round(extraCal)}`;
+            document.getElementById("totalPro").textContent = totalP.toFixed(1);
+            document.getElementById("totalCarb").textContent = totalC.toFixed(1);
+            document.getElementById("totalFat").textContent = totalF.toFixed(1);
+
+            return {
+                name: query || "未命名食物",
+                grams,
+                cookLabel: cook.label,
+                cal: Math.round(totalCal),
+                p: parseFloat(totalP.toFixed(1)),
+                c: parseFloat(totalC.toFixed(1)),
+                f: parseFloat(totalF.toFixed(1))
+            };
+        }
+
+        function renderLogs() {
+            logListEl.innerHTML = "";
+            let sumCal = 0, sumP = 0, sumC = 0, sumF = 0;
+
+            if (logs.length === 0) {
+                logListEl.innerHTML = `<p style="color:#64748b; font-size:0.9rem;">目前還沒有加入任何食物紀錄。</p>`;
+            } else {
+                logs.forEach((item, index) => {
+                    sumCal += item.cal;
+                    sumP += item.p;
+                    sumC += item.c;
+                    sumF += item.f;
+
+                    const div = document.createElement("div");
+                    div.className = "log-item";
+                    div.innerHTML = `
+                        <div>
+                            <strong>${item.name}</strong>（${item.grams}g · ${item.cookLabel}）
+                            <div style="font-size:0.82rem; color:#475569;">
+                                蛋白質 ${item.p}g / 碳水 ${item.c}g / 脂肪 ${item.f}g
+                            </div>
+                        </div>
+                        <div style="display:flex; align-items:center; gap:10px;">
+                            <strong>${item.cal} kcal</strong>
+                            <button type="button" class="btn-danger-sm" onclick="removeLog(${index})">刪除</button>
+                        </div>
+                    `;
+                    logListEl.appendChild(div);
+                });
+            }
+
+            document.getElementById("dayTotalCal").textContent = Math.round(sumCal);
+            document.getElementById("dayTotalPro").textContent = sumP.toFixed(1);
+            document.getElementById("dayTotalCarb").textContent = sumC.toFixed(1);
+            document.getElementById("dayTotalFat").textContent = sumF.toFixed(1);
+            localStorage.setItem("weight_sys_food_logs", JSON.stringify(logs));
+        }
+
+        function removeLog(i) {
+            logs.splice(i, 1);
+            renderLogs();
+        }
+
+        [foodInput, gramsInput, cookSelect].forEach(el => {
+            el.addEventListener("input", calcNow);
+            el.addEventListener("change", calcNow);
+        });
+
+        document.getElementById("addBtn").addEventListener("click", () => {
+            const data = calcNow();
+            if (!foodInput.value.trim() || data.grams <= 0) return;
+            logs.unshift(data);
+            renderLogs();
+        });
+
+        document.getElementById("clearBtn").addEventListener("click", () => {
+            logs = [];
+            renderLogs();
+        });
+
+        initFoods();
+        calcNow();
+        renderLogs();
+    </script>
+</body>
+</html>
