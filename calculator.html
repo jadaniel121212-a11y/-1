@@ -1,70 +1,197 @@
 <!DOCTYPE html>
-<html lang="zh-Hant">
+<html lang="zh-TW">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>飲食熱量與烹調方式計算機</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans TC", sans-serif; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>食物熱量計算機 - 個人體重管理系統</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .calc-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 14px;
+            margin-bottom: 14px;
+        }
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .form-group label {
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+        .form-group input,
+        .form-group select {
+            padding: 10px 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            font-size: 1rem;
+            background: #fff;
+            color: #111827;
+        }
+        .match-badge {
+            font-size: 0.85rem;
+            padding: 8px 12px;
+            border-radius: 8px;
+            margin-bottom: 14px;
+            background: #ecfdf5;
+            border: 1px solid #a7f3d0;
+            color: #065f46;
+        }
+        .match-badge.fallback {
+            background: #fffbeb;
+            border-color: #fde68a;
+            color: #92400e;
+        }
+        .preset-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+        .btn-chip {
+            padding: 6px 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 999px;
+            background: #f8fafc;
+            color: #1e293b;
+            font-size: 0.85rem;
+            cursor: pointer;
+        }
+        .btn-chip:hover {
+            background: #2563eb;
+            color: #fff;
+            border-color: #2563eb;
+        }
+        .result-box {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 16px;
+            margin-top: 12px;
+        }
+        .total-cal {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #16a34a;
+            margin: 4px 0 10px;
+        }
+        .macro-summary {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 14px;
+            text-align: center;
+        }
+        .macro-item {
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 8px;
+            font-size: 0.9rem;
+        }
+        .btn-primary {
+            padding: 10px 16px;
+            border: none;
+            border-radius: 8px;
+            background: #16a34a;
+            color: #fff;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .btn-primary:hover {
+            background: #15803d;
+        }
+        .btn-danger-sm {
+            padding: 4px 10px;
+            border: 1px solid #ef4444;
+            border-radius: 6px;
+            background: transparent;
+            color: #ef4444;
+            font-size: 0.8rem;
+            cursor: pointer;
+        }
+        .log-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 12px;
+            border-bottom: 1px solid #e2e8f0;
+            gap: 12px;
+        }
+        .log-item:last-child {
+            border-bottom: none;
+        }
+    </style>
 </head>
-<body class="bg-slate-900 text-slate-100 min-h-screen py-8 px-4">
-  <div class="max-w-3xl mx-auto space-y-6">
-    <!-- 頁首 -->
-    <header class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-slate-800 pb-4">
-      <div>
-        <h1 class="text-2xl font-bold tracking-tight text-emerald-400">飲食熱量與烹調計算機</h1>
-        <p class="text-sm text-slate-400 mt-1">輸入食物、克數與烹調方式，即時估算總熱量與營養素</p>
-      </div>
-      <a href="index.html" class="text-sm text-slate-300 hover:text-emerald-400 underline underline-offset-4">← 返回首頁</a>
+<body>
+
+    <header class="header">
+        <div class="container">
+            <h1 class="site-title">食物熱量計算機</h1>
+            <p class="tagline">輸入食物名稱、克數與烹調方式，系統自動辨識熱量與營養素。</p>
+            <nav class="nav-bar">
+                <a href="index.html" class="nav-link">首頁</a>
+                <a href="food.html" class="nav-link">可食用食物</a>
+                <a href="calculator.html" class="nav-link active">熱量計算機</a>
+                <a href="rules.html" class="nav-link">管理體重規則</a>
+                <a href="record.html" class="nav-link">體重紀錄</a>
+                <a href="login.html" class="nav-link">登入 / 註冊</a>
+            </nav>
+        </div>
     </header>
 
-    <!-- 主要計算卡片 -->
-    <section class="bg-slate-800/80 border border-slate-700 rounded-2xl p-6 shadow-xl space-y-5">
-      <!-- 1. 食物選擇與熱量輸入 -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div>
-          <label for="foodName" class="block text-sm font-medium text-slate-300 mb-1">食物名稱（可搜尋或自訂）</label>
-          <input
-            type="text"
-            id="foodName"
-            list="foodList"
-            placeholder="例如：雞胸肉、白飯、板豆腐..."
-            class="w-full rounded-lg bg-slate-900 border border-slate-700 px-3.5 py-2.5 text-slate-100 focus:outline-none focus:border-emerald-500"
-          />
-          <datalist id="foodList"></datalist>
-        </div>
+    <main class="container content">
+        <section class="card">
+            <h2>輸入食物自動算熱量</h2>
 
-        <div>
-          <label for="baseCal" class="block text-sm font-medium text-slate-300 mb-1">每 100g 食材熱量 (kcal)</label>
-          <input
-            type="number"
-            id="baseCal"
-            min="0"
-            step="1"
-            value="115"
-            class="w-full rounded-lg bg-slate-900 border border-slate-700 px-3.5 py-2.5 text-slate-100 focus:outline-none focus:border-emerald-500"
-          />
-        </div>
-      </div>
+            <div class="preset-row" id="quickFoods"></div>
 
-      <!-- 常見食物快速點選 -->
-      <div>
-        <span class="block text-xs text-slate-400 mb-2">常見食材快選：</span>
-        <div id="quickFoodBtns" class="flex flex-wrap gap-2"></div>
-      </div>
+            <div class="calc-grid">
+                <div class="form-group">
+                    <label for="foodInput">1. 輸入食物名稱</label>
+                    <input type="text" id="foodInput" list="foodDatalist" placeholder="例如：雞胸肉、白飯、鮭魚、地瓜..." value="雞胸肉">
+                    <datalist id="foodDatalist"></datalist>
+                </div>
 
-      <!-- 營養素微調（選填，選內建食物會自動帶入） -->
-      <div class="grid grid-cols-3 gap-3 bg-slate-900/60 p-3 rounded-xl border border-slate-700/60">
-        <div>
-          <label for="baseProtein" class="block text-xs text-slate-400 mb-1">蛋白質 / 100g (g)</label>
-          <input type="number" id="baseProtein" min="0" step="0.1" value="23.3" class="w-full rounded bg-slate-800 border border-slate-700 px-2.5 py-1.5 text-sm text-slate-100" />
-        </div>
-        <div>
-          <label for="baseCarbs" class="block text-xs text-slate-400 mb-1">碳水 / 100g (g)</label>
-          <input type="number" id="baseCarbs" min="0" step="0.1" value="0" class="w-full rounded bg-slate-800 border border-slate-700 px-2.5 py-1.5 text-sm text-slate-100" />
-        </div>
-        <div>
-          <label for="baseFat" class="block text-xs text-slate-400 mb-1">脂肪 / 100g (g)</label>
-          <input type="number" id="baseFat" min="0" step="0.1" value="1.9" class="w-full rounded bg-slate-800 border border-slate-700 px-2.5 py-1.5 text-sm text-slate-1
+                <div class="form-group">
+                    <label for="gramsInput">2. 食用克數 (g)</label>
+                    <input type="number" id="gramsInput" min="1" step="1" value="150">
+                </div>
+
+                <div class="form-group">
+                    <label for="cookMethod">3. 烹調方式</label>
+                    <select id="cookMethod">
+                        <option value="boil">水煮 / 清蒸 / 無油氣炸（+0 kcal / 100g）</option>
+                        <option value="pan_light">乾煎 / 少油炒（+22 kcal / 100g）</option>
+                        <option value="stir_braise">一般炒 / 紅燒 / 滷味（+55 kcal / 100g）</option>
+                        <option value="deep_fry">油炸 / 裹粉炸（+135 kcal / 100g）</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- 系統自動辨識提示列 -->
+            <div id="matchStatus" class="match-badge"></div>
+
+            <div class="preset-row">
+                <span style="font-size: 0.85rem; color: #64748b; align-self: center;">快速克數：</span>
+                <button type="button" class="btn-chip" onclick="setGrams(50)">50g</button>
+                <button type="button" class="btn-chip" onclick="setGrams(100)">100g</button>
+                <button type="button" class="btn-chip" onclick="setGrams(150)">150g</button>
+                <button type="button" class="btn-chip" onclick="setGrams(200)">200g</button>
+                <button type="button" class="btn-chip" onclick="setGrams(300)">300g</button>
+            </div>
+
+            <div class="result-box">
+                <div>預估總熱量</div>
+                <div class="total-cal"><span id="totalCal">173</span> kcal</div>
+                <div style="font-size: 0.85rem; margin-bottom: 12px;">
+                    食材本身：<strong id="rawCal">173</strong> kcal ｜ 烹調額外熱量：<strong id="extraCal">+0</strong> kcal
+                </div>
+
+                <div class="macro-summary">
+                    <div class="macro-item">蛋白質：<strong><span id="totalPro">35.0</span> g</strong></div>
+                    <div class="macro-item">碳水：<strong><span id="totalCarb">0.0</span> g</strong></div>
+                    <div class="macro-item">脂肪（含油）：<strong><span id="totalFat
